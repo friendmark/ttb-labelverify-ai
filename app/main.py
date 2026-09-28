@@ -1,9 +1,17 @@
+import sys
 import time
+from pathlib import Path
+
+# Ensure the repository root is available when Streamlit executes this file directly.
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 from PIL import Image
 import streamlit as st
+
 from app.services.ocr import extract_text
 from app.rules.compliance import evaluate
-
 st.set_page_config(page_title="TTB LabelVerify AI", page_icon="🔎", layout="wide")
 st.title("TTB LabelVerify AI")
 st.caption("AI-assisted alcohol beverage label verification • Prototype decision-support tool")
