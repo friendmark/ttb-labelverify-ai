@@ -15,7 +15,7 @@ def preprocess(image: Image.Image) -> Image.Image:
 
     # Limit the working image size before OCR. Large label artwork can make
     # Tesseract unnecessarily slow on constrained deployment environments.
-    max_dimension = 1800
+    max_dimension = 1200
     width, height = image.size
 
     if max(width, height) > max_dimension:
@@ -53,7 +53,7 @@ def extract_text(image: Image.Image) -> OCRResult:
         import pytesseract
         from pytesseract import Output
         processed = preprocess(image)
-        data = pytesseract.image_to_data(processed, config="--psm 6", output_type=Output.DICT)
+        data = pytesseract.image_to_data(processed, config="--psm 11", output_type=Output.DICT)
         words, confs = [], []
         for word, conf in zip(data.get("text", []), data.get("conf", [])):
             word = (word or "").strip()
