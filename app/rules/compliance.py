@@ -24,11 +24,39 @@ def norm(value: str) -> str:
 
 
 def fuzzy_match(expected: str, detected: str, threshold: float = .88):
-    if not expected: return True, 1.0
-    a, b = norm(expected), norm(detected)
-    if a and a in b: return True, 1.0
-    score = SequenceMatcher(None, a, b).ratio() if a and b else 0.0
-    return score >= threshold, score
+    if not expected:
+        return True, 1.0
+
+    a = norm(expected)
+    b = norm(detected)
+
+    if not a:
+        return True, 1.0
+
+    # Exact normalized phrase found anywhere in OCR text.
+    if a in b:
+        return True, 1.0
+
+    # Compare the expected value against similarly sized word windows.
+    # This handles OCR line breaks and surrounding unrelated label text.
+    expected_words = a.split()
+    detected_words = b.split()
+    window_size = len(expected_words)
+
+    best_score = SequenceMatcher(None, a, b).ratio() if b else 0.0
+
+    if window_size and len(detected_words) >= window_size:
+        for extra in (0, 1, 2):
+            size = window_size + extra
+            if size > len(detected_words):
+                continue
+
+            for i in range(len(detected_words) - size + 1):
+                candidate = " ".join(detected_words[i:i + size])
+                score = SequenceMatcher(None, a, candidate).ratio()
+                best_score = max(best_score, score)
+
+    return best_score >= threshold, best_score
 
 
 def extract_abv(text: str):
@@ -45,8 +73,30 @@ def extract_proof(text: str):
 
 
 def extract_net_contents(text: str):
-    m = re.search(r"\b(\d+(?:\.\d+)?)\s*(ML|L|LITER|LITERS|CL)\b", text, re.I)
-    return f"{m.group(1)} {m.group(2)}" if m else ""
+    # Tolerate common OCR spacing and punctuation variations such as
+    # "750 mL", "750ml", "750 m L", and "750 ML".
+    patterns = [
+        r"\b(\d+(?:[.,]\d+)?)\s*M\s*L\b",
+        r"\b(\d+(?:[.,]\d+)?)\s*C\s*L\b",
+        r"\b(\d+(?:[.,]\d+)?)\s*(LITERS?|LITRES?)\b",
+        r"\b(\d+(?:[.,]\d+)?)\s*L\b",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, text, re.I)
+        if match:
+            value = match.group(1).replace(",", ".")
+
+            if re.search(r"M\s*L", match.group(0), re.I):
+                unit = "mL"
+            elif re.search(r"C\s*L", match.group(0), re.I):
+                unit = "cL"
+            else:
+                unit = "L"
+
+            return f"{value} {unit}"
+
+    return ""
 
 
 def warning_similarity(text: str):

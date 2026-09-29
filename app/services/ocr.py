@@ -12,10 +12,23 @@ class OCRResult:
 
 def preprocess(image: Image.Image) -> Image.Image:
     image = ImageOps.exif_transpose(image).convert("L")
+
+    # Limit the working image size before OCR. Large label artwork can make
+    # Tesseract unnecessarily slow on constrained deployment environments.
+    max_dimension = 1800
+    width, height = image.size
+
+    if max(width, height) > max_dimension:
+        scale = max_dimension / max(width, height)
+        new_size = (
+            max(1, int(width * scale)),
+            max(1, int(height * scale)),
+        )
+        image = image.resize(new_size, Image.Resampling.LANCZOS)
+
     image = ImageOps.autocontrast(image)
     image = image.filter(ImageFilter.SHARPEN)
     return ImageEnhance.Contrast(image).enhance(1.25)
-
 
 def assess_quality(image: Image.Image):
     gray = ImageOps.exif_transpose(image).convert("L")
