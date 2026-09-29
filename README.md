@@ -4,6 +4,16 @@ A standalone proof-of-concept for AI-assisted alcohol beverage label verificatio
 
 > Prototype decision support only. It does not make a final TTB regulatory determination.
 
+## Live prototype
+
+**Deployed application:** https://ttb-labelverify-ai.onrender.com
+
+The public prototype can be tested directly in a browser. Because it is hosted on a free Render instance, the first request after a period of inactivity may require additional startup time.
+
+## Automated testing
+
+Automated tests run through GitHub Actions on pushes and pull requests to `main`. The workflow uses Python 3.11, installs the project dependencies, and executes the test suite with `pytest`.
+
 ## Core capabilities
 
 - Upload PNG/JPEG/WebP label artwork.
